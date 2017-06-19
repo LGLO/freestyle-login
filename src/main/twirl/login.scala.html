@@ -1,0 +1,21 @@
+@(msg: String, client_id:String)
+
+<div>
+<h3><p>Welcome to freestyle-blog-app</p></h3>
+<p>
+Login either with credentials or using GitHub account (OAuth2.0)
+</p>
+<p>
+<form action="/login/credentials" method="post">
+Username:<br/>
+<input type="text" name="username"/><br/>
+Password:<br/>
+<input type="password" name="password"/><br/>
+<input type="submit" value="Log in!"/>
+</form>
+</p>
+<a href="https://github.com/login/oauth/authorize?scope=user:email&client_id=@client_id">Login with GitHub</a>
+<p>
+Does not have account yet? Please <a href="register">register</a>!
+</p>
+</div>

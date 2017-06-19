@@ -1,0 +1,19 @@
+@(client_id:String)
+
+<div>
+<h3><p>Register in freestyle-blog-app</p></h3>
+<p>
+Register either with email and password or using GitHub account (OAuth2.0)
+</p>
+<p>
+<form action="/login/credentials" method="post">
+Email:<br/>
+<input type="text" name="username"/><br/>
+Password:<br/>
+<input type="password" name="password"/><br/>
+<input type="submit" value="Log in!"/>
+</form>
+</p>
+<a href="https://github.com/login/oauth/authorize?scope=user:email&client_id=@client_id">Login with GitHub</a>
+
+</div>
