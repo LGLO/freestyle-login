@@ -1,6 +1,7 @@
 package io.scalac.frees.login
 
 import freestyle._
+import io.scalac.frees.login.algebras.Github
 
 
 object Programs {
@@ -21,14 +22,3 @@ object Programs {
 
 }
 
-object AAA extends App {
-
-  import freestyle.implicits._
-  import io.scalac.frees.login.handlers.IdHandlers
-  implicit val logHandler = IdHandlers.logHandler
-  implicit val databaseHandler = IdHandlers.databaseHandler
-  implicit val githubHandler = IdHandlers.githubFailedClientHandler
-
-  //val z = Programs.whole[Application.Op].interpret[Id]
-  //println(z)
-}

@@ -15,9 +15,9 @@ import io.scalac.frees.login.types.{EmailAlreadyTaken, RegisterByEmailResponse, 
       insertResult <- database.insertUser(email)
       _ <- insertResult match {
         case UserInserted(id) =>
-          log.info(s"User with email: '$email' registered with id: '$id'")
+          log.info(s"User with email: '$email' inserted with id: '$id'")
         case EmailNotUnique(_) =>
-          log.info(s"Another user with email: '$email' is already registered!")
+          log.warn(s"Another user with email: '$email' is already exists!")
       }
     } yield insertResult
 

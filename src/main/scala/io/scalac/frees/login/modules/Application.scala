@@ -1,8 +1,7 @@
 package io.scalac.frees.login.modules
 
 import freestyle.module
-import io.scalac.frees.login.Github
-import io.scalac.frees.login.algebras.Log
+import io.scalac.frees.login.algebras.{Github, Log}
 
 @module trait Application {
   val github: Github
