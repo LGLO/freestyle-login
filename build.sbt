@@ -26,15 +26,8 @@ lazy val root = (project in file(".")).
       "ch.qos.logback" % "logback-classic" % "1.2.1",
       "io.frees" %% "freestyle" % "0.3.0",
       "com.47deg" %% "github4s" % "0.15.0",
-      scalaTest % Test
+      scalaTest % Test,
+      "org.scalamock" %% "scalamock-scalatest-support" % "3.6.0" % Test
     )
   )
   .enablePlugins(SbtTwirl)
-  .dependsOn(algebras)  
-  .dependsOn(domain)
-
-lazy val algebras = project in file("algebras")
-
-lazy val domain = project in file("domain")
-
-
