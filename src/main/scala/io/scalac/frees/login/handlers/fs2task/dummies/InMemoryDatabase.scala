@@ -1,8 +1,7 @@
 package io.scalac.frees.login.handlers.fs2task.dummies
 
 import fs2.Task
-import io.scalac.frees.login.{GitHubData, GitHubId}
-import io.scalac.frees.login.algebras.{Database, UserInsertionResult}
+import io.scalac.frees.login.algebras.{Database, GitHubData, GitHubId, UserInsertionResult}
 import io.scalac.frees.login.types._
 
 class InMemoryDatabase extends Database.Handler[Task] {

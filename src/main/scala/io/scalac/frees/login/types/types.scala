@@ -1,5 +1,7 @@
 package io.scalac.frees.login.types
 
+import io.scalac.frees.login.algebras.GitHubErrorResponse
+
 sealed trait LogInRequest
 
 case class UserId(v: Long) extends AnyVal
@@ -20,6 +22,10 @@ sealed trait RegistrationResponse
 case object AlreadyRegistered extends RegistrationResponse
 case class UserRegistered(id: UserId) extends RegistrationResponse
 
+sealed trait GHRegistrationResponse
+case object GHAlreadyRegistered extends GHRegistrationResponse
+case class GHUserRegistered(id: UserId) extends GHRegistrationResponse
+case class GHError(err: GitHubErrorResponse) extends GHRegistrationResponse
 
 /**
   * @param v password hash, contains salt if used with sound crypto-algorithm

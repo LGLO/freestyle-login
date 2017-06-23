@@ -27,9 +27,12 @@ lazy val root = (project in file(".")).
       "ch.qos.logback" % "logback-classic" % "1.2.1",
       "io.frees" %% "freestyle" % freestyleVersion,
       "io.frees" %% "freestyle-http-http4s" % freestyleVersion,
+      "io.frees" %% "freestyle-doobie" % freestyleVersion,
       //"io.frees" %% "freestyle-fs2" % freestyleVersion,
       "com.47deg" %% "github4s" % "0.15.0",
       scalaTest % Test,
+      "org.tpolecat" %% "doobie-core-cats" % "0.4.1",
+      "org.tpolecat" %% "doobie-h2-cats" % "0.4.1",
       "org.scalamock" %% "scalamock-scalatest-support" % "3.6.0" % Test
     )
   )

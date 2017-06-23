@@ -1,8 +1,7 @@
 package io.scalac.frees.login.handlers.id
 
 import cats.Id
-import io.scalac.frees.login.{GitHubData, GitHubId}
-import io.scalac.frees.login.algebras.{AlreadyExists, Database, UserInserted, UserInsertionResult}
+import io.scalac.frees.login.algebras._
 import io.scalac.frees.login.types._
 
 class InMemoryDatabase extends Database.Handler[Id] {

@@ -3,20 +3,24 @@ package io.scalac.frees.login.controllers
 import cats.Id
 import fs2.Task
 import io.scalac.frees.login._
-import io.scalac.frees.login.algebras.{Database, GithubClient, Log}
+import io.scalac.frees.login.algebras.{Database, GitHubClient, GitHubData, Log}
 import io.scalac.frees.login.modules.{Deps, Programs}
-import io.scalac.frees.login.types.{AlreadyRegistered, PasswordHash, UserEmail, UserRegistered}
+import io.scalac.frees.login.types._
 import org.http4s._
 import org.http4s.dsl._
 import freestyle._
 import freestyle.implicits._
 import freestyle.http.http4s._
 import fs2.interop.cats._
+import _root_.doobie.imports.Transactor
+import freestyle.doobie._
+import freestyle.doobie.implicits._
 
-class RegisterService(ghClient: InHouseGHClient)(
+class RegisterService()(
   implicit logHandler: Log.Handler[Task],
   db: Database.Handler[Task],
-  gh: GithubClient.Handler[Task]
+  gh: GitHubClient.Handler[Task],
+  xa: Transactor[Task]
 ) {
 
   val Register = Root / "register"
@@ -27,10 +31,11 @@ class RegisterService(ghClient: InHouseGHClient)(
   implicit val app = new Programs[Deps.Op]()
 
   def service = HttpService {
-    case GET -> Register =>
-
+    case GET -> Login =>
       import org.http4s.twirl._
-
+      Ok(html.login(clientId))
+    case GET -> Register =>
+      import org.http4s.twirl._
       Ok(html.register(clientId))
     case req@POST -> Register / "credentials" =>
       registerWithCredentials(req)
@@ -41,17 +46,10 @@ class RegisterService(ghClient: InHouseGHClient)(
         case Some(code) =>
           import org.http4s.dsl._
           val register = req.params.get("state").contains("register")
-          ghClient.login(code).flatMap {
-            case d@GitHubData(_, _) =>
-              if (register)
-                registerWithGitHub(d)
-              else
-                loginWithGitHub(d)
-            case GitHubInsufficientPermissions => Forbidden("inssuficient GH Permissions")
-            case GitHubNoEmail => Forbidden("no verified primary email in GH")
-            case GitHubFailure(t) => InternalServerError("Could not authenticate in GH")
-          }
-
+          if (register)
+            registerWithGitHub(code)
+          else
+            loginWithGitHub(code)
       }
   }
 
@@ -80,17 +78,20 @@ class RegisterService(ghClient: InHouseGHClient)(
     }
   }
 
-  private def registerWithGitHub(ghData: GitHubData): Task[Response] = {
+  private def registerWithGitHub(code: String): Task[Response] = {
 
     import io.circe.generic.auto._
     import io.circe.syntax._
     import org.http4s.circe._
 
-    app.registerWithGitHub(ghData).interpret[Task].flatMap {
-      case UserRegistered(id) =>
+    app.registerWithGitHub(code).interpret[Task].flatMap {
+      case GHUserRegistered(id) =>
         Ok(s"registered: $id")
-      case AlreadyRegistered =>
+      case GHAlreadyRegistered =>
         Conflict(s"GitHub Id is already used")
+      case GHError(reason) =>
+        //TODO: match on reason for more detailed response
+        Forbidden(s"GitHub login did not succeed: $reason")
       case other =>
         val msg = s"register returned: $other, ${
           other.getClass
@@ -98,10 +99,9 @@ class RegisterService(ghClient: InHouseGHClient)(
         println(msg)
         InternalServerError(msg)
     }
-    //Ok(ghData.asJson)
   }
 
-  private def loginWithGitHub(ghData: GitHubData): Task[Response] = {
+  private def loginWithGitHub(code: String): Task[Response] = {
 
     import io.circe.generic.auto._
     import io.circe.syntax._

@@ -1,4 +1,4 @@
-package io.scalac.frees.login
+package io.scalac.frees.login.handlers.fs2task.github
 
 import fs2.Task
 import fs2.util.NonFatal
@@ -7,19 +7,17 @@ import org.http4s._
 import org.http4s.client.blaze.PooledHttp1Client
 import org.http4s.dsl.POST
 
-class InHouseGHClient {
-
-  private val clientSecret = {
-    val envValue = System.getenv("GH_CLIENT_SECRET")
-    if (envValue == null) {
-      val msg = "GitHub secret environment variable GH_CLIENT_SECRET is not set!"
-      sys.error(msg)
-      throw new RuntimeException(msg)
-    } else {
-      envValue
-    }
-  }
-  private val clientId = "de3a5eea50cf961aea26"
+/**
+  * This is simple implementation of GitHubClient,
+  * which is also `GitHubClient.Handler[Task]`.
+  * It was created as part of learning when writing blog post but it is not really
+  * related to Free Monads.
+  * I wanted to use `github4s` but I could not obtain emails list with it.
+  */
+class InHouseGHClient(
+  val clientId: String,
+  val clientSecret: String
+) extends GitHubClient.Handler[Task] {
 
   private val httpClient = PooledHttp1Client()
 
@@ -53,7 +51,7 @@ class InHouseGHClient {
           .map(u => GitHubId(u.id))
       }
 
-      val requestPrimaryEmail: Task[Option[String]] = {
+      val requestPrimaryVerifiedEmail: Task[Option[String]] = {
         val uri = Uri.uri("https://api.github.com/user/emails")
           .withQueryParam("access_token", accessToken)
         httpClient.expect(uri)(jsonOf[Vector[GitHubEmail]])
@@ -62,11 +60,13 @@ class InHouseGHClient {
 
       for {
         id <- requestUserId
-        emailOpt <- requestPrimaryEmail
+        emailOpt <- requestPrimaryVerifiedEmail
       } yield {
         emailOpt match {
-          case Some(email) => GitHubData(id, email)
-          case None => GitHubNoEmail
+          case Some(email) =>
+            GitHubData(id, GitHubEmail(email, primary = true, verified = true))
+          case None =>
+            GitHubNoEmail
         }
       }
     }
@@ -85,8 +85,3 @@ class InHouseGHClient {
   }
 
 }
-
-//Following classes are for circe decoding and basic logic over these
-case class GitHubUser(id: Long)
-
-case class GitHubEmail(email: String, primary: Boolean, verified: Boolean)

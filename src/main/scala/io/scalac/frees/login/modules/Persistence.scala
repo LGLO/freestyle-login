@@ -2,9 +2,10 @@ package io.scalac.frees.login.modules
 
 import freestyle._
 import freestyle.implicits._
-import io.scalac.frees.login.GitHubData
 import io.scalac.frees.login.algebras._
 import io.scalac.frees.login.types._
+
+import cats.free.Free
 
 @module trait Persistence {
   val database: Database

@@ -2,13 +2,12 @@ package io.scalac.frees.login.modules
 
 import freestyle._
 import freestyle.implicits._
-import io.scalac.frees.login.GitHubData
-import io.scalac.frees.login.algebras.{AlreadyExists, _}
+import io.scalac.frees.login.algebras.{AlreadyExists, GitHubDataResponse, _}
 import io.scalac.frees.login.types.{RegistrationResponse, _}
 
 @module trait Deps {
-  val github: Github
-  val persistence: Persistence
+  val github: GitHub
+  val persistence: DoobiePersistence
   val log: Log
 }
 
@@ -42,6 +41,8 @@ class Programs[F[_]]()(implicit D: Deps[F]) {
   import D._
 
   type FS[A] = FreeS[F, A]
+  
+  val dpp = new DoobiePersistencePrograms[F]()(D.persistence)
 
   def registerUser(email: UserEmail, password: PasswordHash): FS[RegistrationResponse] = {
 
@@ -57,7 +58,7 @@ class Programs[F[_]]()(implicit D: Deps[F]) {
 
     for {
       _ <- log.info(s"Trying to register new user with email: '$email'")
-      insertResult <- persistence.insertUser(Credentials(email, password))
+      insertResult <- dpp.saveCredentialsUser(Credentials(email, password))
       registrationResult <- insertResult match {
         case UserInserted(id) =>
           userRegistered(id)
@@ -67,24 +68,41 @@ class Programs[F[_]]()(implicit D: Deps[F]) {
     } yield registrationResult
   }
 
-  def registerWithGitHub(ghData: GitHubData): FS[RegistrationResponse] = {
-    import ghData._
+  def registerWithGitHub(ghCode: String): FS[GHRegistrationResponse] = {
 
-    def ghAccountAlreadyLinked: FS[RegistrationResponse] =
+    def handleGitHubResponse(resp: GitHubDataResponse): FS[GHRegistrationResponse] = resp match {
+      case d: GitHubData =>
+        insert(d)
+      case f: GitHubErrorResponse =>
+        ghError(f)
+    }
+
+    def insert(ghData: GitHubData): FS[GHRegistrationResponse] =
+      for {
+        insertResult <- dpp.saveGitHubUser(ghData)
+        registrationResult <- insertResult match {
+          case UserInserted(uid) =>
+            //No logging, to show use of `pure`
+            FreeS.pure[F, GHRegistrationResponse](GHUserRegistered(uid))
+          case AlreadyExists =>
+            ghAccountAlreadyLinked
+        }
+      } yield registrationResult
+
+    def ghAccountAlreadyLinked: FS[GHRegistrationResponse] =
       for {
         _ <- log.info("Cannot create user, GitHub Id is already linked to existing account.")
-      } yield AlreadyRegistered: RegistrationResponse
+      } yield GHAlreadyRegistered: GHRegistrationResponse
+    
+    def ghError(err: GitHubErrorResponse): FS[GHRegistrationResponse] =
+      for {
+        _ <- log.info(s"Could not get all required data from GitHub, reason: '$err'")
+      } yield GHError(err): GHRegistrationResponse
 
     for {
-      _ <- log.info(s"Trying to register new user with email: '$email'")
-      insertResult <- persistence.insertGitHubUser(ghData)
-      registrationResult <- insertResult match {
-        case UserInserted(uid) =>
-          //No logging, to show use of `pure`
-          FreeS.pure[F, RegistrationResponse](UserRegistered(uid))
-        case AlreadyExists =>
-          ghAccountAlreadyLinked
-      }
-    } yield registrationResult
+      _ <- log.info(s"Trying to register new user with GitHub code: '$ghCode'")
+      ghResp <- github.login(ghCode)
+      result <- handleGitHubResponse(ghResp)
+    } yield result
   }
 }
