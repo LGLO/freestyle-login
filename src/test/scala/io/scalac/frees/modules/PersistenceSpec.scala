@@ -3,7 +3,7 @@ package io.scalac.frees.modules
 import cats.Id
 import freestyle._
 import freestyle.implicits._
-import io.scalac.frees.login.algebras.{Database, EmailNotUnique, InsertUserResult, UserInserted}
+import io.scalac.frees.login.algebras.{Database, AlreadyExists, UserInsertionResult, UserInserted}
 import io.scalac.frees.login.handlers.id.{InMemoryDatabase, Level, RecordingLogger}
 import io.scalac.frees.login.modules.Persistence
 import io.scalac.frees.login.types._
@@ -30,7 +30,7 @@ class PersistenceSpec extends WordSpec with MustMatchers {
         val result = persistence.insertUser(UserEmail1).flatMap { _ =>
           persistence.insertUser(UserEmail1)
         }.interpret[Id]
-        result mustBe EmailNotUnique(UserEmail1)
+        result mustBe AlreadyExists(UserEmail1)
       }
 
       "log line in case of failure" in new Context {

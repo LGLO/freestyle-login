@@ -8,7 +8,7 @@ case class UserEmail(v: String) extends AnyVal
 
 case class User(id: UserId, email: UserEmail)
 
-case class CredentialsLoginRequest(userEmail: UserEmail, hash: PasswordHash)
+case class Credentials(email: UserEmail, password: PasswordHash)
 
 sealed trait CredentialsLoginResponse
 
@@ -16,9 +16,9 @@ case object InvalidLogIn extends CredentialsLoginResponse
 
 case class LoggedIn(jwt: JWT) extends CredentialsLoginResponse
 
-sealed trait RegisterByEmailResponse
-case object EmailAlreadyTaken extends RegisterByEmailResponse
-case class UserRegistered(id: UserId) extends RegisterByEmailResponse
+sealed trait RegistrationResponse
+case object AlreadyRegistered extends RegistrationResponse
+case class UserRegistered(id: UserId) extends RegistrationResponse
 
 
 /**

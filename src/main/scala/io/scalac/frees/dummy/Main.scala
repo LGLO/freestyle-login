@@ -8,7 +8,7 @@ import io.scalac.frees.dummy.AllTheMath.Op
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
 
-object Main extends App {
+object Main { //extends App {
 
   import freestyle._
   import freestyle.implicits._

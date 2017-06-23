@@ -3,7 +3,9 @@ package io.scalac.frees.login
 import java.util.concurrent.{ExecutorService, Executors}
 
 import fs2.{Stream, Task}
-import io.scalac.frees.login.controllers.OAuth2Callbacks
+import io.scalac.frees.login.algebras.{Database, GithubClient, Log}
+import io.scalac.frees.login.controllers.RegisterService
+import io.scalac.frees.login.handlers.fs2task.dummies.{GitHubClientHandler, InMemoryDatabase, PrintlnLogger}
 import org.http4s.server.blaze.BlazeBuilder
 import org.http4s.util.StreamApp
 
@@ -14,6 +16,12 @@ import scala.util.Properties.envOrNone
 
 object Main extends App {
 
+  implicit val logHandler: Log.Handler[Task] = new PrintlnLogger
+  implicit val db: Database.Handler[Task] = new InMemoryDatabase
+  implicit val gh: GithubClient.Handler[Task] = new GitHubClientHandler
+
+  val ghClient = new InHouseGHClient
+  
   val server = new StreamApp {
 
     val port: Int = envOrNone("HTTP_PORT") map (_.toInt) getOrElse 9000
@@ -23,7 +31,7 @@ object Main extends App {
     override def stream(args: List[String]): Stream[Task, Nothing] =
       BlazeBuilder
         .bindHttp(port, ip)
-        .mountService(OAuth2Callbacks.service)
+        .mountService(new RegisterService(ghClient).service)
         .withServiceExecutor(pool)
         .serve
 

@@ -6,14 +6,14 @@
 Register either with email and password or using GitHub account (OAuth2.0)
 </p>
 <p>
-<form action="/login/credentials" method="post">
+<form action="/register/credentials" method="post">
 Email:<br/>
-<input type="text" name="username"/><br/>
+<input type="text" name="email"/><br/>
 Password:<br/>
 <input type="password" name="password"/><br/>
 <input type="submit" value="Log in!"/>
 </form>
 </p>
-<a href="https://github.com/login/oauth/authorize?scope=user:email&client_id=@client_id">Login with GitHub</a>
+<a href="https://github.com/login/oauth/authorize?scope=user:email&client_id=@client_id&state=register">Sign-up with GitHub</a>
 
 </div>

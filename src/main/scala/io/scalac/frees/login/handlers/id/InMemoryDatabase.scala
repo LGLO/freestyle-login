@@ -1,37 +1,57 @@
 package io.scalac.frees.login.handlers.id
 
 import cats.Id
-import io.scalac.frees.login.algebras.{Database, EmailNotUnique, InsertUserResult, UserInserted}
-import io.scalac.frees.login.types.{PasswordHash, User, UserEmail, UserId}
+import io.scalac.frees.login.{GitHubData, GitHubId}
+import io.scalac.frees.login.algebras.{AlreadyExists, Database, UserInserted, UserInsertionResult}
+import io.scalac.frees.login.types._
 
 class InMemoryDatabase extends Database.Handler[Id] {
 
-  var nextId = 1L
-  var byId = Map.empty[UserId, User]
-  var byEmail = Map.empty[UserEmail, User]
-  var passwords = Map.empty[UserId, PasswordHash]
+  var lastId = 0L
+  var credentialsUsers = Vector.empty[(UserId, Credentials)]
+  var gitHubUsers = Vector.empty[(UserId, GitHubData)]
 
-  def insertUser(v: UserEmail): Id[InsertUserResult] =
+  def insertCredentialsUser(credentials: Credentials): Id[UserInsertionResult] =
     synchronized {
-      if (byEmail.contains(v)) {
-        EmailNotUnique(v)
+      import credentials._
+      if (credentialsUsers.exists(_._2.email == email)) {
+        AlreadyExists
       } else {
-        val id = UserId(nextId)
-        nextId += 1
-        val u = User(id, v)
-        byId += (id -> u)
-        byEmail += (v -> u)
-        UserInserted(id)
+        val uid: UserId = getNextId()
+        credentialsUsers = credentialsUsers :+ (uid, credentials)
+        UserInserted(uid)
       }
     }
 
-  def getUserByEmail(email: UserEmail): Id[Option[User]] =
-    byEmail.get(email)
+  private def getNextId(): UserId =
+    synchronized {
+      lastId += 1
+      UserId(lastId)
+    }
 
-  def savePassword(user: UserId, password: PasswordHash): Id[Unit] =
-    passwords += user -> password
+  private def findUserByEmail(email: UserEmail): Option[(UserId, Credentials)] = {
+    credentialsUsers.find(_._2.email == email)
+  }
+
+  def getUserByEmail(email: UserEmail): Id[Option[UserId]] =
+    findUserByEmail(email).map(_._1)
 
   def getPassword(email: UserEmail): Id[Option[PasswordHash]] =
-    byEmail.get(email).flatMap(u => passwords.get(u.id))
+    findUserByEmail(email).map(_._2.password)
+
+  def insertGitHubUser(ghData: GitHubData): Id[UserInsertionResult] =
+    synchronized {
+      import ghData._
+      if (gitHubUsers.exists(_._2.id == id)) {
+        AlreadyExists
+      } else {
+        val uid: UserId = getNextId()
+        gitHubUsers = gitHubUsers :+ (uid, ghData)
+        UserInserted(uid)
+      }
+    }
+
+  override def getUserByGitHubId(ghId: GitHubId): Id[Option[UserId]] =
+    gitHubUsers.find(_._2.id == ghId).map(_._1)
 
 }

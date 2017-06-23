@@ -1,25 +1,22 @@
 package io.scalac.frees.login.algebras
 
 import freestyle.free
-import io.scalac.frees.login.types.{PasswordHash, User, UserEmail, UserId}
+import io.scalac.frees.login.{GitHubData, GitHubId}
+import io.scalac.frees.login.types._
 
-sealed trait InsertUserResult
-case class UserInserted(id: UserId) extends InsertUserResult
-case class EmailNotUnique(email: UserEmail) extends InsertUserResult
+sealed trait UserInsertionResult
+case class UserInserted(id: UserId) extends UserInsertionResult
+case object AlreadyExists extends UserInsertionResult
 
 @free trait Database {
 
-  /**
-    * @param email - new user email, has to be unique
-    * @return Success
-    */
-  def insertUser(email: UserEmail): FS[InsertUserResult]
+  def insertCredentialsUser(credentials: Credentials): FS[UserInsertionResult]
 
-  def getUserByEmail(email: UserEmail): FS[Option[User]]
+  def insertGitHubUser(ghData: GitHubData): FS[UserInsertionResult]
 
-  def savePassword(user: UserId, password: PasswordHash): FS[Unit]
+  def getUserByEmail(email: UserEmail): FS[Option[UserId]]
 
   def getPassword(email: UserEmail): FS[Option[PasswordHash]]
 
-  //def getUserByGitHubId(ghId: GitHubId): FS[User]
+  def getUserByGitHubId(ghId: GitHubId): FS[Option[UserId]]
 }

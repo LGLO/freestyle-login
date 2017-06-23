@@ -1,10 +1,7 @@
 package io.scalac.frees.login.handlers
 
 import cats.Id
-import io.scalac.frees.login.algebras.{Database, GithubClient, Log, UserInserted}
-import io.scalac.frees.login.types.{PasswordHash, User, UserEmail, UserId}
-import org.log4s.Logger
-import org.slf4j.LoggerFactory
+import io.scalac.frees.login.algebras.GithubClient
 
 object IdHandlers {
 
