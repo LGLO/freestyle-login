@@ -30,7 +30,7 @@ class RegisterService()(
 
   private val clientId = "de3a5eea50cf961aea26"
 
-  implicit val app = new Programs[Deps.Op]()
+  implicit val app = Programs[Deps.Op]
 
   def service = HttpService {
     case GET -> Login =>

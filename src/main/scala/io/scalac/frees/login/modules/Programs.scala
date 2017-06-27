@@ -44,13 +44,11 @@ import com.github.t3hnar.bcrypt._
   * @param D
   * @tparam F
   */
-class Programs[F[_]]()(implicit D: Deps[F]) {
+class Programs[F[_]](val persistence: DoobiePersistencePrograms[F])(implicit D: Deps[F]) {
 
   import D._
 
   type FS[A] = FreeS[F, A]
-
-  val persistence = new DoobiePersistencePrograms[F]()(D.doobiePersistence)
 
   /**
     * Register new user with credentials access.
@@ -196,5 +194,12 @@ class Programs[F[_]]()(implicit D: Deps[F]) {
       ghResp <- gitHub.login(ghCode)
       result <- handleGitHubResponse(ghResp)
     } yield result
+  }
+}
+
+object Programs{
+  def apply[F[_]](implicit D: Deps[F]) = {
+    val persistence = new DoobiePersistencePrograms[F]()(D.doobiePersistence)
+    new Programs[F](persistence)
   }
 }
