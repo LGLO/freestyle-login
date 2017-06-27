@@ -1,8 +1,9 @@
-package io.scalac.frees.login.handlers.fs2task.github
+package io.scalac.frees.login.handlers.task.github
 
 import fs2.Task
 import fs2.util.NonFatal
 import io.scalac.frees.login.algebras._
+import io.scalac.frees.login.types.GitHubId
 import org.http4s._
 import org.http4s.client.blaze.PooledHttp1Client
 import org.http4s.dsl.POST
@@ -48,7 +49,7 @@ class InHouseGHClient(
           .withQueryParam("access_token", accessToken)
         httpClient
           .expect(uri)(jsonOf[GitHubUser])
-          .map(u => GitHubId(u.id))
+          .map(_.id)
       }
 
       val requestPrimaryVerifiedEmail: Task[Option[String]] = {
@@ -62,12 +63,7 @@ class InHouseGHClient(
         id <- requestUserId
         emailOpt <- requestPrimaryVerifiedEmail
       } yield {
-        emailOpt match {
-          case Some(email) =>
-            GitHubData(id, GitHubEmail(email, primary = true, verified = true))
-          case None =>
-            GitHubNoEmail
-        }
+        emailOpt.map(GitHubData(id, _)).getOrElse(GitHubNoEmail)
       }
     }
 
@@ -83,5 +79,10 @@ class InHouseGHClient(
         GitHubFailure(t)
     }
   }
+
+  //Following classes are for circe decoding and basic logic over these
+  case class GitHubEmail(email: String, primary: Boolean, verified: Boolean)
+
+  case class GitHubUser(id: Long)
 
 }

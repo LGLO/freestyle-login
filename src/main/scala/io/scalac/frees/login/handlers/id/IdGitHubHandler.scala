@@ -10,7 +10,6 @@ class IdGitHubHandler(ghData: GitHubData) extends GitHubClient.Handler[Id] {
 
 object IdGitHubHandler {
   def create(
-    ghData: GitHubData =
-    GitHubData(GitHubId(-1L), GitHubEmail("not@exist", primary = true, verified = true))
+    ghData: GitHubData = GitHubData(-1L, "not@exist")
   ) = new IdGitHubHandler(ghData)
 }

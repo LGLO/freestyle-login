@@ -6,9 +6,12 @@ import _root_.doobie.imports._
 import cats.implicits._
 import fs2.interop.cats._
 
-object DBSetup {
+/**
+  * Sets up H2 DB tables for user, credentials and GitHub access.
+  */
+object DB {
 
-  def apply(xa: Transactor[Task]): Unit = {
+  def setup(xa: Transactor[Task]): Unit = {
 
     val createUsers: Update0 =
       sql"CREATE TABLE users (id IDENTITY)".update
@@ -17,7 +20,7 @@ object DBSetup {
       sql"""CREATE TABLE credentials (
             user_id BIGINT,
             email VARCHAR NOT NULL UNIQUE,
-            password VARCHAR NOT NULL
+            password_hash VARCHAR NOT NULL
           )
       """.update
 

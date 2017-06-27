@@ -4,11 +4,13 @@ import java.util.concurrent.{ExecutorService, Executors}
 
 import _root_.doobie.h2.h2transactor.H2Transactor
 import _root_.doobie.imports.Transactor
-import fs2.{Stream, Task}
-import io.scalac.frees.login.algebras.{Database, GitHubClient, Log}
+import fs2.{Strategy, Stream, Task}
+import io.scalac.frees.login.algebras.{Database, GitHubClient, JwtService, Log}
 import io.scalac.frees.login.controllers.RegisterService
-import io.scalac.frees.login.handlers.fs2task.dummies.{InMemoryDatabase, PrintlnLogger}
-import io.scalac.frees.login.handlers.fs2task.github.InHouseGHClient
+import io.scalac.frees.login.crypto.EllipticCurveCrypto
+import io.scalac.frees.login.handlers.task.dummies.{InMemoryDatabase, PrintlnLogger}
+import io.scalac.frees.login.handlers.task.github.InHouseGHClient
+import io.scalac.frees.login.handlers.task.jwt.JwtHandler
 import org.http4s.server.blaze.BlazeBuilder
 import org.http4s.util.StreamApp
 
@@ -36,8 +38,11 @@ object Main extends App {
   implicit val xa: Transactor[Task] =
     H2Transactor[Task]("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1", "sa", "").unsafeRunSync.
       toOption.getOrElse(throw new Exception("Could not create example transactor"))
+  val kp = EllipticCurveCrypto.genKeyPair
+  implicit val jwtService: JwtService.Handler[Task] = 
+    JwtHandler(kp.getPublic, kp.getPrivate)(Strategy.sequential)
 
-  DBSetup(xa)
+  DB.setup(xa)
 
   val server = new StreamApp {
 

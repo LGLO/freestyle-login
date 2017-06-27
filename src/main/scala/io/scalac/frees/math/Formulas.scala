@@ -1,10 +1,10 @@
-package io.scalac.frees.dummy
+package io.scalac.frees.math
 
 object Formulas {
-  
+
   import freestyle._
   import freestyle.implicits._
-  
+
   def `(a+b)^2`[F[_]](a: Int, b: Int)(implicit A: AllTheMath[F]) = {
     import A._
     for {

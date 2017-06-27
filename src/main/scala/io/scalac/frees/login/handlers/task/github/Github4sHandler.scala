@@ -1,4 +1,4 @@
-package io.scalac.frees.login.handlers.fs2task.github
+package io.scalac.frees.login.handlers.task.github
 
 import fs2.{Strategy, Task}
 import github4s.Github
@@ -44,10 +44,7 @@ class Github4sHandler (
           case Right(ghResult) =>
             val user = ghResult.result
             user.email.map { email: String =>
-              GitHubData(
-                GitHubId(user.id.toLong),
-                GitHubEmail(email, primary = true, verified = true)
-              )
+              GitHubData(user.id.toLong, email)
             }.getOrElse(GitHubNoEmail)
           case Left(ex) => GitHubFailure(ex)
         }

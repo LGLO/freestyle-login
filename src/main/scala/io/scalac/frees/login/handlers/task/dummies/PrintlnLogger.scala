@@ -1,4 +1,4 @@
-package io.scalac.frees.login.handlers.fs2task.dummies
+package io.scalac.frees.login.handlers.task.dummies
 
 import fs2.Task
 import io.scalac.frees.login.algebras.Log

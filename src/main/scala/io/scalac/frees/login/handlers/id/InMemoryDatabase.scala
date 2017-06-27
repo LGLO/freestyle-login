@@ -7,17 +7,16 @@ import io.scalac.frees.login.types._
 class InMemoryDatabase extends Database.Handler[Id] {
 
   var lastId = 0L
-  var credentialsUsers = Vector.empty[(UserId, Credentials)]
+  var credentialsUsers = Vector.empty[(UserId, (UserEmail, PasswordHash))]
   var gitHubUsers = Vector.empty[(UserId, GitHubData)]
 
-  def insertCredentialsUser(credentials: Credentials): Id[UserInsertionResult] =
+  def insertCredentialsUser(email: UserEmail, hash: PasswordHash): Id[UserInsertionResult] =
     synchronized {
-      import credentials._
-      if (credentialsUsers.exists(_._2.email == email)) {
+      if (findUserByEmail(email).isDefined) {
         AlreadyExists
       } else {
         val uid: UserId = getNextId()
-        credentialsUsers = credentialsUsers :+ (uid, credentials)
+        credentialsUsers = credentialsUsers :+ (uid, (email, hash))
         UserInserted(uid)
       }
     }
@@ -25,18 +24,18 @@ class InMemoryDatabase extends Database.Handler[Id] {
   private def getNextId(): UserId =
     synchronized {
       lastId += 1
-      UserId(lastId)
+      lastId
     }
 
-  private def findUserByEmail(email: UserEmail): Option[(UserId, Credentials)] = {
-    credentialsUsers.find(_._2.email == email)
+  private def findUserByEmail(email: UserEmail): Option[(UserId, (UserEmail, PasswordHash))] = {
+    credentialsUsers.find(_._2._1 == email)
   }
 
   def getUserByEmail(email: UserEmail): Id[Option[UserId]] =
     findUserByEmail(email).map(_._1)
 
   def getPassword(email: UserEmail): Id[Option[PasswordHash]] =
-    findUserByEmail(email).map(_._2.password)
+    findUserByEmail(email).map(_._2._2)
 
   def insertGitHubUser(ghData: GitHubData): Id[UserInsertionResult] =
     synchronized {

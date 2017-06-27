@@ -1,4 +1,4 @@
-package io.scalac.frees.dummy
+package io.scalac.frees.math
 
 import freestyle._
 

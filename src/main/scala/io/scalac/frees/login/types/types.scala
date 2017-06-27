@@ -4,34 +4,35 @@ import io.scalac.frees.login.algebras.GitHubErrorResponse
 
 sealed trait LogInRequest
 
-case class UserId(v: Long) extends AnyVal
-
-case class UserEmail(v: String) extends AnyVal
-
 case class User(id: UserId, email: UserEmail)
 
-case class Credentials(email: UserEmail, password: PasswordHash)
+case class Credentials(email: UserEmail, password: String)
 
-sealed trait CredentialsLoginResponse
+//Hierarchies (with common classes) for credentials and OAuth sign-ins
+sealed trait LoginResponse
 
-case object InvalidLogIn extends CredentialsLoginResponse
+sealed trait GHLoginResponse
 
-case class LoggedIn(jwt: JWT) extends CredentialsLoginResponse
+case class LoggedIn(jwt: JWT) extends LoginResponse with GHLoginResponse
 
+case object InvalidCredentials extends LoginResponse
+
+case object GHUserNotRegistered extends GHLoginResponse
+
+case object GHLoginError extends GHLoginResponse
+
+//Hierarchies (with common classes) for credentials and OAuth registrations
 sealed trait RegistrationResponse
-case object AlreadyRegistered extends RegistrationResponse
-case class UserRegistered(id: UserId) extends RegistrationResponse
 
 sealed trait GHRegistrationResponse
+
+case object AlreadyRegistered extends RegistrationResponse
+
+case class UserRegistered(id: UserId) extends RegistrationResponse with GHRegistrationResponse
+
+case class InternalFailure(err: Throwable) extends RegistrationResponse with GHRegistrationResponse
+
 case object GHAlreadyRegistered extends GHRegistrationResponse
-case class GHUserRegistered(id: UserId) extends GHRegistrationResponse
+
 case class GHError(err: GitHubErrorResponse) extends GHRegistrationResponse
-
-/**
-  * @param v password hash, contains salt if used with sound crypto-algorithm
-  */
-case class PasswordHash(v: Array[Byte]) extends AnyVal
-
-//Issued Java Web Token
-case class JWT(v: String) extends AnyVal
   

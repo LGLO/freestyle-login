@@ -1,14 +1,14 @@
-package io.scalac.frees.dummy
+package io.scalac.frees.math
 
 import java.util.concurrent.TimeUnit
 
 import cats.Id
-import io.scalac.frees.dummy.AllTheMath.Op
+import io.scalac.frees.math.AllTheMath.Op
 
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
 
-object Main { //extends App {
+object Main extends App {
 
   import freestyle._
   import freestyle.implicits._
