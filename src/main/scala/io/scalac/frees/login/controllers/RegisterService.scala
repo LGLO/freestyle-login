@@ -18,11 +18,11 @@ import fs2.Task
 import _root_.doobie.imports.Transactor
 
 class RegisterService()(
-  implicit logHandler: Log.Handler[Task],
-  db: Database.Handler[Task],
-  gh: GitHubClient.Handler[Task],
-  xa: Transactor[Task],
-  jwt: JwtService.Handler[Task]
+  implicit logHandler: FSHandler[Log.Op, Task],
+  //db: FSHandler[Database.Op, Task],
+  gh: FSHandler[GitHubClient.Op, Task],
+  xa: FSHandler[DoobieM.Op, Task],
+  jwt: FSHandler[JwtService.Op, Task]
 ) {
 
   val Register = Root / "register"

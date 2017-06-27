@@ -4,13 +4,16 @@ import java.util.concurrent.{ExecutorService, Executors}
 
 import _root_.doobie.h2.h2transactor.H2Transactor
 import _root_.doobie.imports.Transactor
+import cats.Id
+import cats.arrow.FunctionK
+import freestyle.FSHandler
+import freestyle.doobie.implicits._
 import fs2.{Strategy, Stream, Task}
-import io.scalac.frees.login.algebras.{Database, GitHubClient, JwtService, Log}
+import io.scalac.frees.login.algebras.{GitHubClient, JwtService, Log}
 import io.scalac.frees.login.controllers.RegisterService
 import io.scalac.frees.login.crypto.EllipticCurveCrypto
-import io.scalac.frees.login.handlers.task.dummies.{InMemoryDatabase, PrintlnLogger}
+import io.scalac.frees.login.handlers.id.{IdJwtHandler, PrintlnLogger}
 import io.scalac.frees.login.handlers.task.github.InHouseGHClient
-import io.scalac.frees.login.handlers.task.jwt.JwtHandler
 import org.http4s.server.blaze.BlazeBuilder
 import org.http4s.util.StreamApp
 
@@ -32,15 +35,21 @@ object Main extends App {
   }
   private val clientId = "de3a5eea50cf961aea26"
 
-  implicit val logHandler: Log.Handler[Task] = new PrintlnLogger
-  implicit val db: Database.Handler[Task] = new InMemoryDatabase
+  val idToTask = new FunctionK[Id, Task]{
+    override def apply[A](fa: Id[A]): Task[A] = Task(fa)(Strategy.sequential)
+  }
+  
+  implicit val logHandler: FSHandler[Log.Op, Task] = (new PrintlnLogger).andThen(idToTask)
   implicit val gh: GitHubClient.Handler[Task] = new InHouseGHClient(clientId, clientSecret)
   implicit val xa: Transactor[Task] =
     H2Transactor[Task]("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1", "sa", "").unsafeRunSync.
       toOption.getOrElse(throw new Exception("Could not create example transactor"))
-  val kp = EllipticCurveCrypto.genKeyPair
-  implicit val jwtService: JwtService.Handler[Task] = 
-    JwtHandler(kp.getPublic, kp.getPrivate)(Strategy.sequential)
+
+  
+  implicit val jwtService: FSHandler[JwtService.Op, Task] = {
+    val kp = EllipticCurveCrypto.genKeyPair
+    new IdJwtHandler(kp.getPublic, kp.getPrivate).andThen(idToTask)
+  }
 
   DB.setup(xa)
 
