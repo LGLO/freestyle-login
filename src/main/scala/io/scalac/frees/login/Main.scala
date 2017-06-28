@@ -7,12 +7,12 @@ import _root_.doobie.imports.Transactor
 import cats.Id
 import cats.arrow.FunctionK
 import freestyle.FSHandler
-import freestyle.doobie.implicits._
 import fs2.{Strategy, Stream, Task}
-import io.scalac.frees.login.algebras.{GitHubClient, JwtService, Log}
+import io.scalac.frees.login.algebras.{GitHubClient, JwtService, Log, LoginDatabase}
 import io.scalac.frees.login.controllers.RegisterService
 import io.scalac.frees.login.crypto.EllipticCurveCrypto
 import io.scalac.frees.login.handlers.id.{IdJwtHandler, PrintlnLogger}
+import io.scalac.frees.login.handlers.task.database.LoginDoobieHandler
 import io.scalac.frees.login.handlers.task.github.InHouseGHClient
 import org.http4s.server.blaze.BlazeBuilder
 import org.http4s.util.StreamApp
@@ -44,7 +44,7 @@ object Main extends App {
   implicit val xa: Transactor[Task] =
     H2Transactor[Task]("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1", "sa", "").unsafeRunSync.
       toOption.getOrElse(throw new Exception("Could not create example transactor"))
-
+  implicit val db: LoginDatabase.Handler[Task] = new LoginDoobieHandler(xa) 
   
   implicit val jwtService: FSHandler[JwtService.Op, Task] = {
     val kp = EllipticCurveCrypto.genKeyPair

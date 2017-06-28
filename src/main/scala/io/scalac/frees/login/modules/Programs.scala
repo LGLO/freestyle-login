@@ -2,7 +2,7 @@ package io.scalac.frees.login.modules
 
 import freestyle._
 import freestyle.implicits._
-import io.scalac.frees.login.algebras.{AlreadyExists, GitHubDataResponse, _}
+import io.scalac.frees.login.algebras._
 import io.scalac.frees.login.types.{RegistrationResponse, _}
 import com.github.t3hnar.bcrypt._
 
@@ -12,7 +12,7 @@ import com.github.t3hnar.bcrypt._
   */
 @module trait Deps {
   val gitHub: GitHub
-  val doobiePersistence: DoobiePersistence
+  val doobiePersistence: LoginPersistence
   val log: Log
   val jwt: JwtService
 }
@@ -44,7 +44,7 @@ import com.github.t3hnar.bcrypt._
   * @param D
   * @tparam F
   */
-class Programs[F[_]](val persistence: DoobiePersistencePrograms[F])(implicit D: Deps[F]) {
+class Programs[F[_]](val persistence: PersistencePrograms[F])(implicit D: Deps[F]) {
 
   import D._
 
@@ -62,7 +62,7 @@ class Programs[F[_]](val persistence: DoobiePersistencePrograms[F])(implicit D: 
 
     def emailAlreadyTaken: FS[RegistrationResponse] =
       for {
-        _ <- log.info(s"Cannot create user, email '$email' already taken")
+        _ <- log.info(s"Cannot create user, email '$email' is already used")
       } yield AlreadyRegistered: RegistrationResponse
 
     def userRegistered(id: UserId): FS[RegistrationResponse] =
@@ -199,7 +199,7 @@ class Programs[F[_]](val persistence: DoobiePersistencePrograms[F])(implicit D: 
 
 object Programs{
   def apply[F[_]](implicit D: Deps[F]) = {
-    val persistence = new DoobiePersistencePrograms[F]()(D.doobiePersistence)
+    val persistence = new PersistencePrograms[F]()(D.doobiePersistence)
     new Programs[F](persistence)
   }
 }

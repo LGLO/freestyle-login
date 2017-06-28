@@ -3,14 +3,13 @@ package io.scalac.frees.modules
 import cats.Id
 import freestyle._
 import freestyle.implicits._
-import io.scalac.frees.login.algebras.{Database, AlreadyExists, UserInsertionResult, UserInserted}
-import io.scalac.frees.login.handlers.id.{InMemoryDatabase, Level, RecordingLogger}
-import io.scalac.frees.login.modules.Persistence
+import io.scalac.frees.login.handlers.id.{Level, RecordingLogger}
+import io.scalac.frees.login.obsolete.{AlreadyExists, Database, InMemoryDatabase, Persistence}
 import io.scalac.frees.login.types._
 import org.scalatest.{MustMatchers, WordSpec}
 
 
-class PersistenceSpec extends WordSpec with MustMatchers {
+class ObsoletePersistenceSpec extends WordSpec with MustMatchers {
 
   val Email1 = "email1"
   val Password1 = "abc"

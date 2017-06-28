@@ -9,8 +9,6 @@ import org.http4s.headers.`Authorization`
 import org.http4s.twirl._
 import org.http4s.Credentials.Token
 import freestyle._
-import freestyle.doobie._
-import freestyle.doobie.implicits._
 import freestyle.http.http4s._
 import freestyle.implicits._
 import fs2.interop.cats._
@@ -21,7 +19,7 @@ class RegisterService()(
   implicit logHandler: FSHandler[Log.Op, Task],
   //db: FSHandler[Database.Op, Task],
   gh: FSHandler[GitHubClient.Op, Task],
-  xa: FSHandler[DoobieM.Op, Task],
+  db: FSHandler[LoginDatabase.Op, Task],
   jwt: FSHandler[JwtService.Op, Task]
 ) {
 

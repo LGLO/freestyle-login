@@ -1,7 +1,8 @@
-package io.scalac.frees.login.handlers.id
+package io.scalac.frees.login.obsolete
 
 import cats.Id
 import io.scalac.frees.login.algebras._
+import io.scalac.frees.login.obsolete.UserInserted
 import io.scalac.frees.login.types._
 
 class InMemoryDatabase extends Database.Handler[Id] {

@@ -1,7 +1,6 @@
-package io.scalac.frees.login.modules
+package io.scalac.frees.login.obsolete
 
 import freestyle._
-import freestyle.implicits._
 import io.scalac.frees.login.algebras._
 import io.scalac.frees.login.types._
 

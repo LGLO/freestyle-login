@@ -32,7 +32,7 @@ lazy val root = (project in file(".")).
       "ch.qos.logback" % "logback-classic" % "1.2.1",
       "io.frees" %% "freestyle" % Versions.freestyle,
       "io.frees" %% "freestyle-http-http4s" % Versions.freestyle,
-      "io.frees" %% "freestyle-doobie" % Versions.freestyle,
+      //"io.frees" %% "freestyle-doobie" % Versions.freestyle,
       "org.tpolecat" %% "doobie-core-cats" % Versions.doobie,
       "org.tpolecat" %% "doobie-h2-cats" % Versions.doobie,
       "com.47deg" %% "github4s" % "0.15.0",

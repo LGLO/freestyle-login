@@ -1,6 +1,7 @@
-package io.scalac.frees.login.algebras
+package io.scalac.frees.login.obsolete
 
 import freestyle.free
+import io.scalac.frees.login.algebras.GitHubData
 import io.scalac.frees.login.types._
 
 sealed trait UserInsertionResult
