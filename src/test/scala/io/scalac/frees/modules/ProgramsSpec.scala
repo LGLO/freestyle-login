@@ -1,38 +1,35 @@
 package io.scalac.frees.modules
 
-import java.sql.Connection
-
 import cats.Id
 import io.scalac.frees.login.modules._
 import io.scalac.frees.login.types._
 import org.scalatest.{MustMatchers, WordSpec}
 import freestyle._
 import freestyle.implicits._
-import io.scalac.frees.login.handlers.id.{Level, PrintlnLogger, RecordingLogger}
-import _root_.doobie.imports.ConnectionIO
-import _root_.doobie.h2.h2transactor.H2Transactor
-import _root_.doobie.imports.Transactor
-import cats.arrow.FunctionK
-import fs2.Task
+import io.scalac.frees.login.handlers.id.{Level, RecordingLogger}
 import fs2.util.Attempt
-import io.scalac.frees.login.DB
 import io.scalac.frees.login.algebras._
-import sun.reflect.generics.reflectiveObjects.NotImplementedException
-
-import scala.util.{Failure, Success}
+import com.github.t3hnar.bcrypt._
 
 class ProgramsSpec extends WordSpec with MustMatchers {
 
+  //Credentials expected by test interpreters.
+  val expectedEmail: UserEmail = "expected@email.com"
+  val expectedPasswd: PasswordHash = "abracadabra".bcrypt
   val existingLoginEmail = "existing@email.com"
-  val existingPlainPassword = "asdf"
 
-  val expectedNewUser1Email = "expected@email.com"
+  val expectedGitHubId: GitHubId = 1234321L
+  val expectedGitHubEmail: UserEmail = "email@from.github"
+  val existingGitHubId: GitHubId = 4321234L
+
   val newUser1Id = 101
+
+  val validGHCode = "abcedf0987654321"
 
   "registerUser(Credentials)" when {
     "used email is unique" should {
       "register user" in new Context {
-        val response = p.registerUser(Credentials(expectedNewUser1Email, "abracadabra")).interpret[Id]
+        val response = p.registerUser(Credentials(expectedEmail, expectedPasswd)).interpret[Id]
         response mustBe UserRegistered(newUser1Id)
       }
     }
@@ -67,22 +64,65 @@ class ProgramsSpec extends WordSpec with MustMatchers {
     }
   }
 
+  "registerGitHubUser" when {
+    "GitHub Id is unique" should {
+      "register user" in new Context {
+        val response = p.registerWithGitHub(validGHCode).interpret[Id]
+        response mustBe UserRegistered(newUser1Id)
+      }
+    }
+
+    "GitHub Id is not unique" should {
+      "return AlreadyExists and log that conflict" in new Context {
+        override implicit val gh = new GH {
+          override def login(code: String): Id[GitHubDataResponse] = GitHubData(existingGitHubId, "")
+        }
+
+        val response = p.registerWithGitHub(validGHCode).interpret[Id]
+        response mustBe GHAlreadyRegistered
+        log.getRecords.exists { e =>
+          e.lvl == Level.WARN &&
+            e.msg.contains(s"'$existingLoginEmail' is already used")
+        }
+      }
+    }
+  }
 
   class Db extends LoginDatabase.Handler[Id] {
     override def insertCredentialsUser(
       e: UserEmail,
       p: PasswordHash
-    ): Id[Attempt[UserId]] = e match {
-      case `expectedNewUser1Email` => Right(newUser1Id)
-      case `existingLoginEmail` => Left(new java.sql.SQLException("-Unique index or primary key violation-"))
-      case _ => Left(new RuntimeException("Unexpected parameter"))
+    ): Id[Attempt[UserId]] = (e, p) match {
+      case (`expectedEmail`, pass) if expectedPasswd.isBcrypted(pass) =>
+        Right(newUser1Id)
+      case (`existingLoginEmail`, _) =>
+        Left(new java.sql.SQLException("-Unique index or primary key violation-"))
+      case _ =>
+        Left(new RuntimeException("Unexpected parameter"))
     }
 
-    override def insertGitHubUser(d: GitHubData): Id[Attempt[UserId]] = ???
+    override def insertGitHubUser(d: GitHubData): Id[Attempt[UserId]] = d match {
+      case GitHubData(`expectedGitHubId`, `expectedGitHubEmail`) =>
+        Right(newUser1Id)
+      case GitHubData(`existingGitHubId`, _) =>
+        Left(new java.sql.SQLException("-Unique index or primary key violation-"))
+      case _ =>
+        Left(new RuntimeException("Unexpected parameter"))
+    }
 
     override def queryByLoginEmail(e: UserEmail): Id[Option[(UserId, PasswordHash)]] = ???
 
     override def queryByGitHubId(id: GitHubId): Id[Option[UserId]] = ???
+  }
+
+  class GH extends GitHubClient.Handler[Id] {
+
+    override def login(code: String): Id[GitHubDataResponse] = code match {
+      case `validGHCode` =>
+        GitHubData(expectedGitHubId, expectedGitHubEmail)
+      case _ =>
+        GitHubFailure(new RuntimeException("unexpected parameter"))
+    }
   }
 
   trait Context {
@@ -96,10 +136,7 @@ class ProgramsSpec extends WordSpec with MustMatchers {
       override protected[this] def validate(jwt: JWT): Id[Option[Claims]] = ???
     }
 
-    implicit val github = new GitHubClient.Handler[Id] {
-      override protected[this] def login(code: String): Id[GitHubDataResponse] = ???
-    }
-
+    implicit val gh = new GH
     val p = Programs[Deps.Op]
 
   }
