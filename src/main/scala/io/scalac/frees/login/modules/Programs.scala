@@ -38,9 +38,9 @@ import com.github.t3hnar.bcrypt._
   * "<macro>:10: value map is not a member of Product with Serializable"
   *
   * This class enables us to capture `F` type and use call other methods from within methods.
-  * 
+  *
   * TODO: Make PR to document this pattern
-  * 
+  *
   * @param D
   * @tparam F
   */
@@ -59,6 +59,7 @@ class Programs[F[_]](val persistence: PersistencePrograms[F])(implicit D: Deps[F
   def registerUser(c: Credentials): FS[RegistrationResponse] = {
     import c.email
     val hash = c.password.bcrypt
+ 
 
     def emailAlreadyTaken: FS[RegistrationResponse] =
       for {
@@ -87,7 +88,7 @@ class Programs[F[_]](val persistence: PersistencePrograms[F])(implicit D: Deps[F
   /**
     * Login user with GitHub access option.
     *
-    * @param ghCode - "code" parameter obtained from OAuth 2.0 first step.    
+    * @param ghCode - "code" parameter obtained from OAuth 2.0 first step.
     * @return `GHLoginResponse`
     */
   def gitHubLogin(ghCode: String): FS[GHLoginResponse] = {

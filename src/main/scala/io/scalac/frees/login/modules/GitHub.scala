@@ -3,7 +3,7 @@ package io.scalac.frees.login.modules
 import freestyle._
 import freestyle.implicits._
 import freestyle.module
-import io.scalac.frees.login.algebras.{GitHubClient, Log}
+import io.scalac.frees.login.algebras.{GitHubClient, GitHubDataResponse, Log}
 
 @module trait GitHub {
   val client: GitHubClient

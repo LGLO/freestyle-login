@@ -14,10 +14,8 @@ import cats.implicits._
   val db: LoginDatabase
 }
 
-class PersistencePrograms[F[_]]()(implicit D: LoginPersistence[F]) {
-
-  import D._
-
+class PersistencePrograms[F[_]]()(implicit LP: LoginPersistence[F]) {
+  import LP._
   type FS[A] = FreeS[F, A]
 
   /**
@@ -35,17 +33,17 @@ class PersistencePrograms[F[_]]()(implicit D: LoginPersistence[F]) {
         case Right(id) =>
           for {
             _ <- log.info(s"User with email: '$email' inserted with id: '$id'")
-          } yield UserInserted(id): UserInsertionResult
+          } yield UserInserted(id)
         case Left(err) if err.getMessage.contains("Unique index or primary key violation") =>
           for {
             _ <- log.info(s"Another user with email: '$email' is already exists")
-          } yield AlreadyExists: UserInsertionResult
+          } yield AlreadyExists
         case Left(err) =>
           for {
             _ <- log.warnWithCause(s"DB failed: '$err'", err)
-          } yield DBFailure(err): UserInsertionResult
+          } yield DBFailure(err)
       }
-    } yield result
+    } yield result: UserInsertionResult
 
   /**
     * Creates new user with GitHub OAuth 2.0 access.
@@ -62,17 +60,17 @@ class PersistencePrograms[F[_]]()(implicit D: LoginPersistence[F]) {
         case Right(uid) =>
           for {
             _ <- log.info(s"User with GitHub Id: '${ghData.id}' inserted with id: '$uid'")
-          } yield UserInserted(uid): UserInsertionResult
+          } yield UserInserted(uid)
         case Left(err) if err.getMessage.contains("Unique index or primary key violation") =>
           for {
             _ <- log.info(s"Another user with GitHub Id: '${ghData.id}' is already exists")
-          } yield AlreadyExists: UserInsertionResult
+          } yield AlreadyExists
         case Left(err) =>
           for {
             _ <- log.warnWithCause(s"DB failed: '$err'", err)
-          } yield DBFailure(err): UserInsertionResult
+          } yield DBFailure(err)
       }
-    } yield result
+    } yield result: UserInsertionResult
 
 
   /**
