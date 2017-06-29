@@ -12,7 +12,7 @@ import com.github.t3hnar.bcrypt._
   */
 @module trait Deps {
   val gitHub: GitHub
-  val doobiePersistence: LoginPersistence
+  val persistence: LoginPersistence
   val log: Log
   val jwt: JwtService
 }
@@ -199,7 +199,7 @@ class Programs[F[_]](val persistence: PersistencePrograms[F])(implicit D: Deps[F
 
 object Programs{
   def apply[F[_]](implicit D: Deps[F]) = {
-    val persistence = new PersistencePrograms[F]()(D.doobiePersistence)
+    val persistence = new PersistencePrograms[F]()(D.persistence)
     new Programs[F](persistence)
   }
 }

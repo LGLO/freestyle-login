@@ -16,4 +16,5 @@ import io.scalac.frees.login.algebras.{GitHubClient, Log}
       _ <- log.info(s"Registration response for code: '$code' is '$resp'")
     } yield resp
   }
+
 }

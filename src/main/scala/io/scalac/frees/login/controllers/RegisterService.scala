@@ -28,7 +28,7 @@ class RegisterService()(
 
   private val clientId = "de3a5eea50cf961aea26"
 
-  implicit val app = Programs[Deps.Op]
+  val app = Programs[Deps.Op]
 
   def service = HttpService {
     case GET -> Login =>
@@ -47,8 +47,8 @@ class RegisterService()(
     req.as[UrlForm].flatMap { form =>
       readEmailAndPassword(form) match {
         case Some((email, password)) =>
-          app.registerUser(UserCredentials(email, password))
-            .interpret[Task].flatMap {
+          val credentials = UserCredentials(email, password)
+          app.registerUser(credentials).interpret[Task].flatMap {
             case UserRegistered(id) =>
               Ok(s"registered: $id")
             case AlreadyRegistered =>
