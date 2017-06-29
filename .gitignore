@@ -2,3 +2,5 @@
 **/target
 *.class
 *.log
+.ensime
+ensime.sbt
