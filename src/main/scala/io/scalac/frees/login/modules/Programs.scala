@@ -1,10 +1,15 @@
 package io.scalac.frees.login.modules
 
+import io.scalac.frees.login.algebras._
+import io.scalac.frees.login.types._
+import com.github.t3hnar.bcrypt._
 import freestyle._
 import freestyle.implicits._
-import io.scalac.frees.login.algebras._
-import io.scalac.frees.login.types.{RegistrationResponse, _}
-import com.github.t3hnar.bcrypt._
+import cats._
+import cats.data._
+import cats.implicits._
+
+import scala.concurrent.Future
 
 /**
   * Gathers GitHub (OAuth 2.0) module with Persistence and Log.
@@ -44,22 +49,22 @@ import com.github.t3hnar.bcrypt._
   * @param D
   * @tparam F
   */
-class Programs[F[_]](val persistence: PersistencePrograms[F])(implicit D: Deps[F]) {
-
+class Programs[F[_]]()(implicit D: Deps[F]) {
   import D._
+  val persistence = new PersistencePrograms[F]()(D.persistence)
 
   type FS[A] = FreeS[F, A]
 
   /**
     * Register new user with credentials access.
+    * Given email needs to be unique.
     *
     * @param c - user's email and password hash
     * @return `RegistrationResponse`.
     */
   def registerUser(c: Credentials): FS[RegistrationResponse] = {
     import c.email
-    val hash = c.password.bcrypt
- 
+    val hash = c.password.bcrypt //hashing plaintext password
 
     def emailAlreadyTaken: FS[RegistrationResponse] =
       for {
@@ -133,27 +138,27 @@ class Programs[F[_]](val persistence: PersistencePrograms[F])(implicit D: Deps[F
     * @return `LoginResponse`.
     */
   def login(credentials: Credentials): FS[LoginResponse] = {
+    import credentials._
     for {
-      userAndPassword <- persistence.getPasswordByEmail(credentials.email)
+      userAndPassword <- persistence.getPasswordByEmail(email)
       response <- userAndPassword match {
-        case Some((id, pass)) if credentials.password.isBcrypted(pass) =>
-          (for {
+        case Some((id, pass)) if password.isBcrypted(pass) =>
+          for {
             _ <- log.info("User '$id' provided valid email and password")
             token <- jwt.issue(id)
             _ <- log.info(s"Token is $token")
-          } yield LoggedIn(token): LoginResponse): FS[LoginResponse]
-        case Some((id, pass)) =>
+          } yield LoggedIn(token)
+        case Some((id, _)) =>
           (for {
-            _ <- log.info(s"User '$id' provided invalid password, expected: ${new String(pass)}")
+            _ <- log.info(s"User '$id' provided invalid password"):FS[Unit]
           } yield InvalidCredentials: LoginResponse): FS[LoginResponse]
         case None =>
           (for {
-            _ <- log.info(s"Login failed due no access for '${credentials.email}' found")
+            _ <- log.info(s"Log in rejected: no access for '$email'")
           } yield InvalidCredentials: LoginResponse): FS[LoginResponse]
       }
-    } yield response
+    } yield response: LoginResponse
   }
-
 
   /**
     * Registers new user with GitHub access option.
@@ -198,9 +203,9 @@ class Programs[F[_]](val persistence: PersistencePrograms[F])(implicit D: Deps[F
   }
 }
 
-object Programs{
+/*object Programs{
   def apply[F[_]](implicit D: Deps[F]) = {
     val persistence = new PersistencePrograms[F]()(D.persistence)
     new Programs[F](persistence)
   }
-}
+}*/

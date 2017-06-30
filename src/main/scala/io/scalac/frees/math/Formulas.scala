@@ -5,7 +5,8 @@ object Formulas {
   import freestyle._
   import freestyle.implicits._
 
-  def `(a+b)^2`[F[_]](a: Int, b: Int)(implicit A: AllTheMath[F]) = {
+  def `(a+b)^2`[F[_]](a: Int, b: Int)
+    (implicit A: AllTheMath[F]): FreeS[F, Int] = {
     import A._
     for {
       s <- basic.add(a, b)

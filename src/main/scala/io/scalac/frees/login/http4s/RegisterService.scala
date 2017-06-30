@@ -1,4 +1,4 @@
-package io.scalac.frees.login.controllers
+package io.scalac.frees.login.http4s
 
 import io.scalac.frees.login.algebras._
 import io.scalac.frees.login.modules.{Deps, Programs}
@@ -9,26 +9,18 @@ import org.http4s.headers.`Authorization`
 import org.http4s.twirl._
 import org.http4s.Credentials.Token
 import freestyle._
-import freestyle.http.http4s._
 import freestyle.implicits._
 import fs2.interop.cats._
 import fs2.Task
-import _root_.doobie.imports.Transactor
 
-class RegisterService()(
-  implicit logHandler: FSHandler[Log.Op, Task],
-  //db: FSHandler[Database.Op, Task],
-  gh: FSHandler[GitHubClient.Op, Task],
-  db: FSHandler[LoginDatabase.Op, Task],
-  jwt: FSHandler[JwtService.Op, Task]
+class RegisterService(clientId: String)(
+  implicit uberHandler: FSHandler[Deps.Op, Task]
 ) {
 
   val Register = Root / "register"
   val Login = Root / "login"
 
-  private val clientId = "de3a5eea50cf961aea26"
-
-  val app = Programs[Deps.Op]
+  val app = new Programs[Deps.Op]()
 
   def service = HttpService {
     case GET -> Login =>

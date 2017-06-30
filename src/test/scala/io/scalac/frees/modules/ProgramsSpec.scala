@@ -137,7 +137,7 @@ class ProgramsSpec extends WordSpec with MustMatchers {
     }
 
     implicit val gh = new GH
-    val p = Programs[Deps.Op]
+    val p = new Programs[Deps.Op]()
 
   }
 

@@ -6,14 +6,16 @@ import _root_.doobie.h2.h2transactor.H2Transactor
 import _root_.doobie.imports.Transactor
 import cats.Id
 import cats.arrow.FunctionK
-import freestyle.FSHandler
+import freestyle._
+import freestyle.implicits._
 import fs2.{Strategy, Stream, Task}
 import io.scalac.frees.login.algebras.{GitHubClient, JwtService, Log, LoginDatabase}
-import io.scalac.frees.login.controllers.RegisterService
+import io.scalac.frees.login.http4s.RegisterService
 import io.scalac.frees.login.crypto.EllipticCurveCrypto
 import io.scalac.frees.login.handlers.id.{IdJwtHandler, PrintlnLogger}
 import io.scalac.frees.login.handlers.task.database.LoginDoobieHandler
 import io.scalac.frees.login.handlers.task.github.InHouseGHClient
+import io.scalac.frees.login.modules.Deps
 import org.http4s.server.blaze.BlazeBuilder
 import org.http4s.util.StreamApp
 
@@ -44,6 +46,7 @@ object Main extends App {
     }
   }
 
+  //natural transformation from `cats.Id` to `fs2.Task`
   val idToTask = new FunctionK[Id, Task] {
     override def apply[A](fa: Id[A]): Task[A] = Task(fa)(Strategy.sequential)
   }
@@ -71,7 +74,7 @@ object Main extends App {
     override def stream(args: List[String]): Stream[Task, Nothing] =
       BlazeBuilder
         .bindHttp(port, ip)
-        .mountService(new RegisterService().service)
+        .mountService(new RegisterService(clientId).service)
         .withServiceExecutor(pool)
         .serve
 
