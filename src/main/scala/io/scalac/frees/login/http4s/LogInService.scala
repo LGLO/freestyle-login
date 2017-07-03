@@ -13,7 +13,7 @@ import freestyle.implicits._
 import fs2.interop.cats._
 import fs2.Task
 
-class RegisterService(clientId: String)(
+class LogInService(clientId: String)(
   implicit uberHandler: FSHandler[Deps.Op, Task]
 ) {
 

@@ -10,12 +10,12 @@ import freestyle._
 import freestyle.implicits._
 import fs2.{Strategy, Stream, Task}
 import io.scalac.frees.login.algebras.{GitHubClient, JwtService, Log, LoginDatabase}
-import io.scalac.frees.login.http4s.RegisterService
+import io.scalac.frees.login.http4s.LogInService
 import io.scalac.frees.login.crypto.EllipticCurveCrypto
 import io.scalac.frees.login.handlers.id.{IdJwtHandler, PrintlnLogger}
 import io.scalac.frees.login.handlers.task.database.LoginDoobieHandler
 import io.scalac.frees.login.handlers.task.github.InHouseGHClient
-import io.scalac.frees.login.modules.Deps
+import org.http4s.HttpService
 import org.http4s.server.blaze.BlazeBuilder
 import org.http4s.util.StreamApp
 
@@ -71,12 +71,14 @@ object Main extends App {
     val ip: String = "0.0.0.0"
     val pool: ExecutorService = Executors.newCachedThreadPool()
 
-    override def stream(args: List[String]): Stream[Task, Nothing] =
+    override def stream(args: List[String]): Stream[Task, Nothing] = {
+      val logInService: HttpService = new LogInService(clientId).service
       BlazeBuilder
         .bindHttp(port, ip)
-        .mountService(new RegisterService(clientId).service)
+        .mountService(logInService)
         .withServiceExecutor(pool)
         .serve
+    }
 
   }
 

@@ -86,6 +86,15 @@ class ProgramsSpec extends WordSpec with MustMatchers {
         }
       }
     }
+
+    "gitHubLogin" when {
+      "GitHub OAuth2.0 login is successful and user is registered" should {
+        "issue token" in new Context {
+          val response = p.gitHubLogin(validGHCode).interpret[Id]
+          response mustBe LoggedIn(s"token-for-$newUser1Id")
+        }
+      }
+    }
   }
 
   class Db extends LoginDatabase.Handler[Id] {
@@ -112,7 +121,7 @@ class ProgramsSpec extends WordSpec with MustMatchers {
 
     override def queryByLoginEmail(e: UserEmail): Id[Option[(UserId, PasswordHash)]] = ???
 
-    override def queryByGitHubId(id: GitHubId): Id[Option[UserId]] = ???
+    override def queryByGitHubId(id: GitHubId): Id[Option[UserId]] = Some(newUser1Id)
   }
 
   class GH extends GitHubClient.Handler[Id] {
